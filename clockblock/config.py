@@ -27,3 +27,5 @@ Mongo_user = 'clockuser1'
 Mongo_password = 'clockuser1'
 
 Default_headpic = "http://www.baidu.com"
+
+invite_friends_value = 40
