@@ -65,6 +65,12 @@ def register():
                             invitationcode = request.values['invitationcode']
                             update_mongo('invitationcode', {'_id': result[0]['_id']},
                                          {'usenum': result[0]['usenum'] + 1})
+                            update_mongo('invitationcode', {'_id': result[0]['_id']},
+                                         {'updatetime':int(time.time())})
+
+                            power_increment = find_mongo('power', {'userphone': phonenum})
+                            update_mongo('power', {'userphone':phonenum},
+                                    {'power_increment': power_increment[0]['power_increment'] + invite_friends_value})
                     except Exception as e:
                         logging.error(e)
                         return Response(response=flask.json.dumps(code_status(500)))
@@ -72,6 +78,13 @@ def register():
                 tag = []
                 if int(idnum.lstrip('0')) < 2000:
                     tag.append('创世节点')
+
+                code = calculation_invite_code()
+                while(True):
+                    if find_mongo('invitationcode',{'_id':code}).count() == 0:
+                        break
+                    code = calculation_invite_code()
+                inset_mongo('invitationcode',{'_id':code, 'updatetime':int(time.time()), 'invitationcode':code, 'usenum':0, 'phonenum':phonenum,'createtime':int(time.time())})
                 inset_mongo('usertag',{'_id':phonenum,'createtime':int(time.time()),'updatetime':int(time.time()),'tags':tag})
                 inset_mongo('user',{'_id':phonenum,'phone':phonenum,'updatetime':int(time.time()),'password': md5encrypt(password),'certificate_type':'','certificate_number':'','invitecode':invitationcode,'nickname': '','createtime':int(time.time()),'id':idnum,'headpic':Default_headpic,'truename':'','isident':0})
                 inset_mongo('power',{'_id':phonenum,'phonenum':phonenum,'total':0,'updatetime':int(time.time()),'createtime':int(time.time()),'items':[]})
@@ -108,7 +121,7 @@ def myinfo():
     if phone.count() > 0:
         headpic = phone[0]['headpic']
         number = phone[0]['id'].lstrip('0')
-        nikename = phone[0]['nikename']
+        nikename = phone[0]['nickname']
         tags = find_mongo('usertag',{'_id':phonenum})[0]['tags']
         result = {'headpic':headpic,'nikename':nikename,'number':number,'tags':tags}
         return Response(response=flask.json.dumps(code_status(200, result)))
@@ -116,20 +129,20 @@ def myinfo():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/modifymyinfo',methods=['POST'])
+@app.route('/modifymyinfo/',methods=['POST'])
 def modifymyinfo():
-    if not('phonenum' in request.values and 'nikename' in request.values):
+    if not('phonenum' in request.values and 'nickname' in request.values):
         return Response(response=flask.json.dumps(code_status(4001)))
     phonenum = request.values['phonenum']
     phone = find_mongo('user',{'_id':phonenum}).count()
     if phone > 0:
-        update_mongo('user', {'_id':phonenum}, {'nikename':request.values['nikename']})
+        update_mongo('user', {'_id':phonenum}, {'nickname':request.values['nickname']})
         return Response(response=flask.json.dumps(code_status(2004)))
     else:
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/userident',methods=['POST'])
+@app.route('/userident/',methods=['POST'])
 def userident():
     if not('phonenum' in request.values and 'certificate_type' in request.values and 'certificate_number' in request.values and 'truename' in request.values):
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -149,7 +162,7 @@ def userident():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/isident',methods=['GET'])
+@app.route('/isident/',methods=['GET'])
 def isident():
     if 'phonenum' not in request.values:
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -164,7 +177,7 @@ def isident():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/identinfo',methods=['GET'])
+@app.route('/identinfo/',methods=['GET'])
 def identinfo():
     if 'phonenum' not in request.values:
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -180,7 +193,7 @@ def identinfo():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/myassethistory',methods=['GET'])
+@app.route('/myassethistory/',methods=['GET'])
 def myassethistory():
     if 'phonenum' not in request.values:
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -193,7 +206,7 @@ def myassethistory():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/getasset',methods=['POST'])
+@app.route('/getasset/',methods=['POST'])
 def getasset():
     if not('phonenum' in request.values and 'assetnum' in request.values):
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -205,9 +218,9 @@ def getasset():
         if assetinfo.count() > 0:
             oritotal = assetinfo[0]['total']
             oridata = assetinfo[0]['items']
-            newdata = oridata.append({'createtime':int(time.time()),'updatetime':int(time.time()),'asset_increment':assetnum})
-            newtotal = oritotal + assetnum
-            update_mongo('asset',{'_id':phonenum},{'total':newtotal,'updatetime':int(time.time()),'items':newdata})
+            oridata.append({'createtime':int(time.time()),'updatetime':int(time.time()),'asset_increment':assetnum})
+            newtotal = oritotal + float(assetnum)
+            update_mongo('asset',{'_id':phonenum},{'total':newtotal,'updatetime':int(time.time()),'items':oridata})
             return Response(response=flask.json.dumps(code_status(2007)))
         else:
             return Response(response=flask.json.dumps(code_status(500)))
@@ -215,7 +228,7 @@ def getasset():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/mypower',methods=['GET'])
+@app.route('/mypower/',methods=['GET'])
 def mypower():
     if 'phonenum' not in request.values:
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -231,7 +244,7 @@ def mypower():
         return Response(response=flask.json.dumps(code_status(4006)))
 
 
-@app.route('/globaldata',methods=['GET'])
+@app.route('/globaldata/',methods=['GET'])
 def globaldata():
     if 'phonenum' not in request.values:
         return Response(response=flask.json.dumps(code_status(4001)))
@@ -247,5 +260,20 @@ def globaldata():
         return Response(response=flask.json.dumps(code_status(200, result)))
     else:
         return Response(response=flask.json.dumps(code_status(4006)))
+
+@app.route('/invitefriends/', methods=['POST'])
+def invitefriends():
+    if 'phonenum' not in request.values:
+        return Response(response=flask.json.dumps(code_status(4001)))
+    phonenum = request.values['phonenum']
+    phone = find_mongo('user', {'_id': phonenum})
+    if phone.count() > 0:
+        invitationcode = find_mongo('invitationcode', {'phonenum': phonenum})[0]['invitationcode']
+        result = {'invitationcode':invitationcode}
+        return Response(response=flask.json.dumps(code_status(200, result)))
+    else:
+        return Response(response=flask.json.dumps(code_status(4006)))
+
+
 if __name__ == '__main__':
     app.run()
