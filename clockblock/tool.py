@@ -5,6 +5,7 @@ from PIL import Image, ImageFont, ImageDraw, ImageFilter
 from config import *
 from pymongo import MongoClient
 import random
+import string
 def validate_picture():
     total = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345789'
     width = 130
@@ -140,4 +141,11 @@ def send_smscode(phonenum):
         return True
     else:
         return False
+
+def calculation_invite_code():
+    base_string = string.digits + string.ascii_letters
+    card_code = ''
+    for j in range(6):
+        card_code += random.choice(base_string)
+    return card_code
 validate_picture()
