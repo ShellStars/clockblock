@@ -252,7 +252,7 @@ def globaldata():
     phone = find_mongo('user', {'_id': phonenum})
     if phone.count() > 0:
         globalpower = [aggregate_mongo('power', [{'$group': {'_id': '', 'total': {'$sum': "$total"}}}]).next()][0]['total']
-        toptower = [{'nickname':find_mongo('user',{'_id':i['userphone']})[0]['nikename'],'power':i['total']} for i in find_mongo('power',{}).sort([("total",pymongo.DESCENDING)]).limit(10)]
+        toptower = [{'nickname':find_mongo('user',{'_id':i['phonenum']})[0]['nickname'],'power':i['total']} for i in find_mongo('power',{}).sort([("total",pymongo.DESCENDING)]).limit(10)]
         globalasset = [aggregate_mongo('asset', [{'$group': {'_id': '', 'total': {'$sum': "$total"}}}]).next()][0]['total']
         todaytimestamp = int(time.mktime((datetime.date.today()).timetuple()))
         todayasset = [aggregate_mongo('asset',[{"$match": {"items.updatetime": {"$gt":todaytimestamp}}},{"$unwind": "$items"},{"$match": {"items.updatetime": {"$gt":todaytimestamp}}},{'$group': {'_id': '', 'total': {'$sum': "$items.asset_increment"}}}]).next()][0]['total']

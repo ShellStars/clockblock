@@ -128,7 +128,7 @@ def sortlistofdict(listdata,keyword,order=True,transformtime=True):
     # order:True from now to old
     result = sorted(listdata, key=lambda x : x[keyword], reverse=order)
     if transformtime == True:
-        result = [{'asset': i['asset'], 'updatetime': unixtotime(i['updatetime'])} for i in result]
+        result = [{'asset': i['asset_increment'], 'updatetime': unixtotime(i['updatetime'])} for i in result]
     return result
 
 
