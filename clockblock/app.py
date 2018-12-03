@@ -34,7 +34,7 @@ def get_smscode():
     phonenum = request.values['phonenum']
     smscode = create_smscode()
     inset_mongo('smscode',{"_id" : phonenum, "phonenum" : phonenum, "createtime" : int(time.time()), "smscode": smscode, "expiretime" : datetime.datetime.utcnow()})
-    if send_smscode(phonenum):
+    if send_smscode(phonenum, smscode):
         return Response(response=flask.json.dumps(code_status(2003)))
     else:
         return Response(response=flask.json.dumps(code_status(4008)))

@@ -6,6 +6,49 @@ from config import *
 from pymongo import MongoClient
 import random
 import string
+import httplib
+import urllib
+import json
+
+
+class Sendsms(object):
+    def __init__(self):
+        self.host = "smsbj1.253.com"
+        self.account = "N9611108"
+        self.password = "jGgRAc4Ik919c5"
+        self.port = 80
+        self.balance_get_uri = "/msg/balance/json"
+        self.sms_send_uri = "/msg/send/json"
+
+    def get_user_balance(self):
+        """
+        取账户余额
+        """
+        params = {'account': self.account, 'password': self.password}
+        params = json.dumps(params)
+        headers = {"Content-type": "application/json"}
+        conn = httplib.HTTPConnection(self.host, port=self.port)
+        conn.request('POST', self.balance_get_uri, params, headers)
+        response = conn.getresponse()
+        response_str = response.read()
+        conn.close()
+        return response_str
+
+
+    def send_sms(self, text, phone):
+        """
+        能用接口发短信
+        """
+        params = {'account': self.account, 'password' : self.password, 'msg': urllib.quote(text), 'phone':phone, 'report' : 'false'}
+        params=json.dumps(params)
+        headers = {"Content-type": "application/json"}
+        conn = httplib.HTTPConnection(self.host, port=self.port, timeout=30)
+        conn.request("POST", self.sms_send_uri, params, headers)
+        response = conn.getresponse()
+        response_str = response.read()
+        conn.close()
+        return response_str
+
 def validate_picture():
     total = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345789'
     width = 130
@@ -136,8 +179,9 @@ def unixtotime(timestamp):
     return time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(timestamp))
 
 
-def send_smscode(phonenum):
-    if True:
+def send_smscode(phonenum, smscode):
+    sms = Sendsms()
+    if json.loads(sms.send_sms('您的验证码为'+str(smscode)+'。如非本人操作请忽略。', str(phonenum)))['code'] == "0":
         return True
     else:
         return False
