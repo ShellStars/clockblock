@@ -1,2 +1,5 @@
 git is a system
 git is free software
+new line
+git is a book
+flower is a flower
